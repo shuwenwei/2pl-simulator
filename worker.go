@@ -1,7 +1,6 @@
 package homework
 
 import (
-	"log"
 	"math/rand"
 	"sync"
 )
@@ -88,7 +87,7 @@ func (w *worker) releaseAllLocks() {
 }
 
 func (w *worker) acquireLock(i int, requestLockType LockType) (state TxnState) {
-	//log.Printf("txn-%d acquire lock-%d\n", w.curTxnId, i)
+	Dprintf("txn-%d acquire lock-%d\n", w.curTxnId, i)
 	state = Normal
 
 	w.resourceLock.Lock()
@@ -151,7 +150,7 @@ func (w *worker) acquireLock(i int, requestLockType LockType) (state TxnState) {
 func (w *worker) avoidDeadLock(lockDesc *LockDesc) TxnState {
 	for txnId := range lockDesc.holders {
 		if txnId < w.curTxnId {
-			log.Printf("txn-%d abort due to wait-die policy\n", w.curTxnId)
+			Dprintf("txn-%d abort due to wait-die policy\n", w.curTxnId)
 			return Abort
 		}
 	}
