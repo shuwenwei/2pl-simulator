@@ -137,6 +137,10 @@ func (w *worker) acquireLock(i int, requestLockType LockType) (state TxnState) {
 		state = w.avoidDeadLock(lockDesc)
 		if state == Abort {
 			lockDesc.mu.Unlock()
+
+			w.resourceLock.Lock()
+			w.downCount(i)
+			w.resourceLock.Unlock()
 			return state
 		}
 
@@ -166,13 +170,18 @@ func (w *worker) releaseLock(i int) {
 	lockDesc.mu.Lock()
 
 	delete(lockDesc.holders, w.curTxnId)
-	// 减少计数
+	w.downCount(i)
+	lockDesc.cond.Broadcast()
+	lockDesc.mu.Unlock()
+}
+
+// 减少计数
+func (w *worker) downCount(i int) {
 	refCount := w.refCountMap[i]
 	w.refCountMap[i] = refCount - 1
 	// 如果该lock没有出现在其他地方
 	if refCount == 1 {
+		delete(w.refCountMap, i)
 		delete(w.lockMap, i)
 	}
-	lockDesc.cond.Broadcast()
-	lockDesc.mu.Unlock()
 }

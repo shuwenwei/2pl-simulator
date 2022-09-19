@@ -23,6 +23,12 @@ func TestWorker(t *testing.T) {
 		go w.run()
 	}
 	wg.Wait()
+	if len(resources.lockMap) != 0 {
+		t.FailNow()
+	}
+	if len(resources.refCountMap) != 0 {
+		t.FailNow()
+	}
 }
 
 func TestLock(t *testing.T) {
@@ -32,6 +38,7 @@ func TestLock(t *testing.T) {
 	}
 	resources := GenerateResource(datas)
 	wg := sync.WaitGroup{}
+	fmt.Println("---------------TestLockUpgrade-----------------")
 	w1 := NewWorker(1, resources, &wg)
 	w2 := NewWorker(2, resources, &wg)
 	finishCh := make(chan struct{})
